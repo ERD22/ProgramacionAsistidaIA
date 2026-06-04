@@ -1,4 +1,4 @@
-let numero = 22;
+let numero = -5;
 
 if (numero < 0) {
     console.log("El número es negativo");
