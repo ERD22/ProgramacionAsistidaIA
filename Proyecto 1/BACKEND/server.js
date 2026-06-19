@@ -1,14 +1,27 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcrypt');
 require('dotenv').config();
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// Configurar CORS - permite cualquier origen ya que frontend y backend están en el mismo servidor
+app.use(cors({
+  origin: '*',
+  credentials: true
+}));
 app.use(express.json());
+
+// Servir archivos estáticos del frontend
+app.use(express.static(path.join(__dirname, '../FRONTEND')));
+
+// Ruta catch-all para SPA - sirve index.html para cualquier ruta que no sea API
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../FRONTEND/index.html'));
+});
 
 // Conexión a Supabase
 const supabase = createClient(
