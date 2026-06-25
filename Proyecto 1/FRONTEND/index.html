@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agenda Diaria</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
   <div class="container mx-auto px-4 py-8 max-w-4xl">
@@ -105,6 +109,27 @@
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
           </div>
         </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Ubicación</label>
+          <button type="button" onclick="obtenerUbicacion()" 
+            class="w-full bg-purple-500 text-white py-2 px-4 rounded-lg hover:bg-purple-600 transition-colors font-medium mb-2">
+            📍 Obtener mi ubicación actual
+          </button>
+          <div id="mapa" style="height: 300px; display: none;" class="rounded-lg border border-gray-300"></div>
+          <div class="grid grid-cols-2 gap-4 mt-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">Latitud</label>
+              <input type="text" id="latitud" readonly
+                class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-700 text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">Longitud</label>
+              <input type="text" id="longitud" readonly
+                class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-700 text-sm">
+            </div>
+          </div>
+          <p id="ubicacionTexto" class="text-sm text-gray-500 mt-1"></p>
+        </div>
         <button type="submit"
           class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors font-medium">
           Agregar Evento
@@ -122,6 +147,6 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>

@@ -15,14 +15,6 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Servir archivos estáticos del frontend
-app.use(express.static(path.join(__dirname, '../FRONTEND')));
-
-// Ruta catch-all para SPA - sirve index.html para cualquier ruta que no sea API
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../FRONTEND/index.html'));
-});
-
 // Conexión a Supabase
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -119,15 +111,20 @@ app.post('/api/auth/login', async (req, res) => {
 // GET - Obtener todos los eventos
 app.get('/api/eventos', async (req, res) => {
   try {
+    console.log('Obteniendo eventos...');
     const { data, error } = await supabase
       .from('eventos')
       .select('*')
       .order('fecha', { ascending: true })
       .order('hora', { ascending: true });
     
+    console.log('Data:', data);
+    console.log('Error:', error);
+    
     if (error) throw error;
-    res.json(data);
+    res.json(data || []);
   } catch (error) {
+    console.error('Error al obtener eventos:', error);
     res.status(500).json({ mensaje: 'Error al obtener eventos' });
   }
 });
@@ -154,7 +151,7 @@ app.get('/api/eventos/:id', async (req, res) => {
 // POST - Crear nuevo evento
 app.post('/api/eventos', async (req, res) => {
   try {
-    const { titulo, descripcion, fecha, hora } = req.body;
+    const { titulo, descripcion, fecha, hora, latitud, longitud } = req.body;
     
     if (!titulo || !fecha) {
       return res.status(400).json({ mensaje: 'Título y fecha son requeridos' });
@@ -163,7 +160,7 @@ app.post('/api/eventos', async (req, res) => {
     const { data, error } = await supabase
       .from('eventos')
       .insert([
-        { titulo, descripcion: descripcion || '', fecha, hora: hora || '' }
+        { titulo, descripcion: descripcion || '', fecha, hora: hora || '', latitud, longitud }
       ])
       .select();
     
@@ -208,6 +205,14 @@ app.delete('/api/eventos/:id', async (req, res) => {
   } catch (error) {
     res.status(500).json({ mensaje: 'Error al eliminar evento' });
   }
+});
+
+// Servir archivos estáticos del frontend
+app.use(express.static(path.join(__dirname, '../FRONTEND')));
+
+// Ruta catch-all para SPA - sirve index.html para cualquier ruta que no sea API
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../FRONTEND/index.html'));
 });
 
 app.listen(PORT, () => {

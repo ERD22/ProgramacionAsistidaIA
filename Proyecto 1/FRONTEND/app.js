@@ -3,6 +3,8 @@ const AUTH_URL = '/api/auth';
 
 let eventos = [];
 let usuarioActual = null;
+let mapa = null;
+let marcador = null;
 
 // Cargar eventos al iniciar
 document.addEventListener('DOMContentLoaded', () => {
@@ -131,11 +133,19 @@ document.getElementById('eventoForm').addEventListener('submit', async (e) => {
     titulo: document.getElementById('titulo').value,
     descripcion: document.getElementById('descripcion').value,
     fecha: document.getElementById('fecha').value,
-    hora: document.getElementById('hora').value
+    hora: document.getElementById('hora').value,
+    latitud: document.getElementById('latitud').value || null,
+    longitud: document.getElementById('longitud').value || null
   };
   
   await crearEvento(evento);
   document.getElementById('eventoForm').reset();
+  document.getElementById('mapa').style.display = 'none';
+  document.getElementById('ubicacionTexto').textContent = '';
+  if (mapa) {
+    mapa.remove();
+    mapa = null;
+  }
 });
 
 async function cargarEventos() {
@@ -206,6 +216,7 @@ function renderizarEventos() {
           <div class="flex gap-4 mt-2 text-sm text-gray-500">
             <span>📆 ${formatearFecha(evento.fecha)}</span>
             ${evento.hora ? `<span>⏰ ${evento.hora}</span>` : ''}
+            ${evento.latitud && evento.longitud ? `<span>📍 <button onclick="verUbicacion(${evento.latitud}, ${evento.longitud})" class="text-blue-500 hover:text-blue-700 underline">Ver ubicación</button></span>` : ''}
           </div>
         </div>
         <button onclick="eliminarEvento('${evento.id}')"
@@ -220,4 +231,77 @@ function renderizarEventos() {
 function formatearFecha(fecha) {
   const opciones = { year: 'numeric', month: 'long', day: 'numeric' };
   return new Date(fecha + 'T00:00:00').toLocaleDateString('es-ES', opciones);
+}
+
+// Función para obtener ubicación actual
+function obtenerUbicacion() {
+  if (!navigator.geolocation) {
+    alert('Tu navegador no soporta geolocalización');
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      
+      document.getElementById('latitud').value = lat;
+      document.getElementById('longitud').value = lng;
+      document.getElementById('ubicacionTexto').textContent = `📍 Ubicación: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      
+      // Mostrar mapa
+      document.getElementById('mapa').style.display = 'block';
+      
+      // Inicializar mapa si no existe
+      if (!mapa) {
+        mapa = L.map('mapa').setView([lat, lng], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors'
+        }).addTo(mapa);
+      } else {
+        mapa.setView([lat, lng], 13);
+      }
+      
+      // Agregar o actualizar marcador
+      if (marcador) {
+        mapa.removeLayer(marcador);
+      }
+      marcador = L.marker([lat, lng]).addTo(mapa);
+    },
+    (error) => {
+      alert('Error al obtener ubicación: ' + error.message);
+    }
+  );
+}
+
+// Función para ver ubicación de un evento
+function verUbicacion(lat, lng) {
+  if (!lat || !lng) return;
+  
+  // Crear modal para mostrar el mapa
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+  modal.innerHTML = `
+    <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-semibold">Ubicación del evento</h3>
+        <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+      </div>
+      <div id="mapaModal" style="height: 400px;"></div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  
+  // Inicializar mapa en el modal
+  const mapaModal = L.map('mapaModal').setView([lat, lng], 15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(mapaModal);
+  L.marker([lat, lng]).addTo(mapaModal);
+  
+  // Limpiar mapa al cerrar modal
+  modal.querySelector('button').onclick = function() {
+    mapaModal.remove();
+    modal.remove();
+  };
 }
